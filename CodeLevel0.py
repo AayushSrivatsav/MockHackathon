@@ -59,42 +59,72 @@ for i in range(n_neighbourhoods):
 
 
 #Print the matrix for verification
-for row in dist_matrix:
-    print(row)
-n = 20
-memo = [[-1]*(1 << (n+1)) for i in range(n+1)]
- 
- 
-def fun(i, mask):
-    # base case
-    # if only ith bit and 1st bit is set in our mask,
-    # it implies we have visited all other nodes already
+#for row in dist_matrix:
+#    print(row)
+n = n_neighbourhoods + 1
+memo = [[-1] * (1 << n) for i in range(n)]
+next_node = [[-1] * (1 << n) for i in range(n)]
+
+def tsp(i, mask):
     if mask == ((1 << i) | 3):
-        return dist_matrix[1][i]
- 
-    # memoization
+        return dist_matrix[0][i]
+
     if memo[i][mask] != -1:
         return memo[i][mask]
- 
-    res = 10**9  # result of this sub-problem
- 
-    # we have to travel all nodes j in mask and end the path at ith node
-    # so for every node j in mask, recursively calculate cost of 
-    # travelling all nodes in mask
-    # except i and then travel back from node j to node i taking 
-    # the shortest path take the minimum of all possible j nodes
-    for j in range(1, n+1):
-        if (mask & (1 << j)) != 0 and j != i and j != 1:
-            res = min(res, fun(j, mask & (~(1 << i))) + dist_matrix[j][i])
-    memo[i][mask] = res  # storing the minimum value
+
+    res = float('inf')
+    for j in range(1, n):
+        if mask & (1 << j) and j != i:
+            cur_res = tsp(j, mask & (~(1 << i))) + dist_matrix[j][i]
+            if cur_res < res:
+                res = cur_res
+                next_node[i][mask] = j
+
+    memo[i][mask] = res
     return res
- 
- 
-# Driver program to test above logic
-ans = 10**9
-for i in range(1, n+1):
-    # try to go from node 1 visiting all nodes in between to i
-    # then return from i taking the shortest route to 1
-    ans = min(ans, fun(i, (1 << (n+1))-1) + dist_matrix[i][1])
- 
-print("The cost of most efficient tour = " + str(ans))
+
+# Find the minimum cost
+min_cost = float('inf')
+last_node = -1
+final_mask = (1 << n) - 1
+
+for i in range(0, n):
+    cost = tsp(i, final_mask) + dist_matrix[i][0]
+    if cost < min_cost:
+        min_cost = cost
+        last_node = i
+
+# Reconstruct the path
+path = [0]
+# Assuming the rest of the code is the same as provided previously
+
+# Initialize the starting point for path reconstruction
+current_node = last_node
+current_mask = final_mask
+
+path = [current_node]  # Start from the last node
+print(current_node)
+# Reconstruct the path
+while current_node > 0:
+    # Get the next node (rename the variable to avoid conflict)
+    next_node_in_path = next_node[current_node][current_mask]
+    path.append(next_node_in_path)
+    
+    # Update the current mask by removing the current node from the set
+    current_mask = current_mask & ~(1 << current_node)
+    
+    # Update the current node to the next node for the next iteration
+    current_node = next_node_in_path
+
+# Reverse the path to get the correct order starting from the restaurant
+path = path[::-1]
+
+# Include the restaurant as 'r0' at the beginning and end of the path
+formatted_path = ['r0'] + [f'n{i-1}' for i in path[1:] if i != 0] + ['r0']
+
+# Format the output
+output = {"v0": {"path": formatted_path}}
+output_json = json.dumps(output, indent=2)
+print("Optimal path:", output_json)
+with open("level0_output.json", "w") as outfile:
+    outfile.write(json_object)
