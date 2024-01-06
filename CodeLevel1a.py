@@ -1,7 +1,7 @@
 import json
 
 # Load the data
-file_path = "path_to_your_file/level0.json"
+file_path = "C:\Student Handout\Input data\level1a.json"
 
 with open(file_path, 'r') as file:
     data = json.load(file)
@@ -11,6 +11,18 @@ n_neighbourhoods = data['n_neighbourhoods']
 neighborhoods = data['neighbourhoods']
 vehicle_capacity = data['vehicles']['v0']['capacity']
 restaurant_distances = data['restaurants']['r0']['neighbourhood_distance']
+
+dist_matrix = []
+
+# Add distances from restaurant to neighborhoods
+dist_matrix.append([0] + restaurant_distances)
+# Add distances between neighborhoods
+for i in range(n_neighbourhoods):
+    dist_row = [neighborhoods[f'n{i}']['distances'][j] for j in range(n_neighbourhoods)]
+    dist_row.insert(0,restaurant_distances[i])
+    #dist_row.append(n_neighbourhoods[i])
+    dist_matrix.append(dist_row)
+
 
 # Function to find the nearest neighborhood
 def find_nearest(current_location, unvisited, distances):
@@ -53,7 +65,14 @@ for slot in delivery_slots:
     route.append('r0')  # Return to the restaurant
     optimized_slots.append(route)
 
-# Output the optimized delivery slots
-print("Optimized Delivery Slots:")
-for slot in optimized_slots:
-    print(slot)
+output = {"v0": {}}
+for i, slot in enumerate(optimized_slots, start=1):
+    output["v0"][f"path{i}"] = slot
+
+# Convert to JSON format
+output_json = json.dumps(output, indent=2)
+print("Optimized Delivery Slots in JSON format:")
+print(output_json)
+
+with open("level1_output.json", "w") as outfile:
+    outfile.write(output_json)
